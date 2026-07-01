@@ -1,0 +1,487 @@
+{% extends "base.html" %}
+
+{% block title %}Settings - {{ app_name }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col-12">
+            <h2 class="fw-bold">
+                <i class="fas fa-cog text-primary me-2"></i>Settings
+            </h2>
+        </div>
+    </div>
+    
+    <div class="row">
+        <div class="col-md-3">
+            <div class="list-group">
+                <a href="#profile" class="list-group-item list-group-item-action active" data-bs-toggle="tab">
+                    <i class="fas fa-user me-2"></i>Profile
+                </a>
+                <a href="#security" class="list-group-item list-group-item-action" data-bs-toggle="tab">
+                    <i class="fas fa-shield-alt me-2"></i>Security
+                </a>
+                <a href="#preferences" class="list-group-item list-group-item-action" data-bs-toggle="tab">
+                    <i class="fas fa-sliders-h me-2"></i>Preferences
+                </a>
+                <a href="#notifications" class="list-group-item list-group-item-action" data-bs-toggle="tab">
+                    <i class="fas fa-bell me-2"></i>Notifications
+                </a>
+                <a href="#api" class="list-group-item list-group-item-action" data-bs-toggle="tab">
+                    <i class="fas fa-code me-2"></i>API Settings
+                </a>
+            </div>
+        </div>
+        
+        <div class="col-md-9">
+            <div class="tab-content">
+                <!-- Profile Settings -->
+                <div class="tab-pane fade show active" id="profile">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="mb-0">Profile Settings</h5>
+                        </div>
+                        <div class="card-body">
+                            <form id="profileSettingsForm">
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label">Full Name</label>
+                                        <input type="text" class="form-control" id="settingsFullName" 
+                                               value="{{ current_user.get_full_name() }}">
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label">Username</label>
+                                        <input type="text" class="form-control" id="settingsUsername" 
+                                               value="{{ current_user.username }}">
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label">Email</label>
+                                        <input type="email" class="form-control" id="settingsEmail" 
+                                               value="{{ current_user.email }}">
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label">Mobile Number</label>
+                                        <input type="tel" class="form-control" id="settingsMobile" 
+                                               value="{{ current_user.profile.mobile_number or '' }}">
+                                    </div>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Bio</label>
+                                    <textarea class="form-control" id="settingsBio" rows="3">{{ current_user.profile.bio or '' }}</textarea>
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label">City</label>
+                                        <input type="text" class="form-control" id="settingsCity" 
+                                               value="{{ current_user.profile.city or '' }}">
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label">Country</label>
+                                        <input type="text" class="form-control" id="settingsCountry" 
+                                               value="{{ current_user.profile.country or '' }}">
+                                    </div>
+                                </div>
+                                <button type="button" class="btn btn-primary" onclick="saveProfileSettings()">
+                                    <i class="fas fa-save"></i> Save Profile
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Security Settings -->
+                <div class="tab-pane fade" id="security">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="mb-0">Security Settings</h5>
+                        </div>
+                        <div class="card-body">
+                            <h6>Change Password</h6>
+                            <form id="passwordForm">
+                                <div class="mb-3">
+                                    <label class="form-label">Current Password</label>
+                                    <input type="password" class="form-control" id="currentPassword" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">New Password</label>
+                                    <input type="password" class="form-control" id="newPassword" required>
+                                    <div class="mt-2">
+                                        <div class="progress" style="height: 5px;">
+                                            <div id="settingsPasswordStrength" class="progress-bar" 
+                                                 role="progressbar" style="width: 0%;"></div>
+                                        </div>
+                                        <small class="text-muted">Password strength indicator</small>
+                                    </div>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Confirm New Password</label>
+                                    <input type="password" class="form-control" id="confirmNewPassword" required>
+                                </div>
+                                <button type="button" class="btn btn-primary" onclick="changePassword()">
+                                    <i class="fas fa-key"></i> Change Password
+                                </button>
+                            </form>
+                            
+                            <hr>
+                            
+                            <h6 class="text-danger">Danger Zone</h6>
+                            <p class="text-muted">Once you delete your account, there is no going back. Please be certain.</p>
+                            <button class="btn btn-danger" onclick="deleteAccount()">
+                                <i class="fas fa-trash"></i> Delete Account
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Preferences -->
+                <div class="tab-pane fade" id="preferences">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="mb-0">Preferences</h5>
+                        </div>
+                        <div class="card-body">
+                            <form id="preferencesForm">
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label">Theme</label>
+                                        <select class="form-select" id="settingsTheme">
+                                            <option value="light" {% if current_user.settings and current_user.settings.theme == 'light' %}selected{% endif %}>Light</option>
+                                            <option value="dark" {% if current_user.settings and current_user.settings.theme == 'dark' %}selected{% endif %}>Dark</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label">Currency</label>
+                                        <select class="form-select" id="settingsCurrency">
+                                            <option value="USD" {% if current_user.profile and current_user.profile.preferred_currency == 'USD' %}selected{% endif %}>USD ($)</option>
+                                            <option value="EUR" {% if current_user.profile and current_user.profile.preferred_currency == 'EUR' %}selected{% endif %}>EUR (€)</option>
+                                            <option value="GBP" {% if current_user.profile and current_user.profile.preferred_currency == 'GBP' %}selected{% endif %}>GBP (£)</option>
+                                            <option value="INR" {% if current_user.profile and current_user.profile.preferred_currency == 'INR' %}selected{% endif %}>INR (₹)</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label">Timezone</label>
+                                        <select class="form-select" id="settingsTimezone">
+                                            <option value="UTC" {% if current_user.profile.timezone == 'UTC' %}selected{% endif %}>UTC</option>
+                                            <option value="EST" {% if current_user.profile.timezone == 'EST' %}selected{% endif %}>EST</option>
+                                            <option value="CST" {% if current_user.profile.timezone == 'CST' %}selected{% endif %}>CST</option>
+                                            <option value="MST" {% if current_user.profile.timezone == 'MST' %}selected{% endif %}>MST</option>
+                                            <option value="PST" {% if current_user.profile.timezone == 'PST' %}selected{% endif %}>PST</option>
+                                            <option value="GMT" {% if current_user.profile.timezone == 'GMT' %}selected{% endif %}>GMT</option>
+                                            <option value="IST" {% if current_user.profile.timezone == 'IST' %}selected{% endif %}>IST</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label">Language</label>
+                                        <select class="form-select" id="settingsLanguage">
+                                            <option value="en" {% if current_user.settings and current_user.settings.language == 'en' %}selected{% endif %}>English</option>
+                                            <option value="es" {% if current_user.settings and current_user.settings.language == 'es' %}selected{% endif %}>Spanish</option>
+                                            <option value="fr" {% if current_user.settings and current_user.settings.language == 'fr' %}selected{% endif %}>French</option>
+                                            <option value="de" {% if current_user.settings and current_user.settings.language == 'de' %}selected{% endif %}>German</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <div class="form-check form-switch">
+                                            <input class="form-check-input" type="checkbox" id="settingsAutoRefresh" 
+                                                   {% if current_user.settings and current_user.settings.auto_refresh %}checked{% endif %}>
+                                            <label class="form-check-label" for="settingsAutoRefresh">Auto Refresh</label>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label">Refresh Interval (seconds)</label>
+                                        <input type="number" class="form-control" id="settingsRefreshInterval" 
+                                               value="{{ current_user.settings.refresh_interval if current_user.settings else 30 }}" min="10" max="300">
+                                    </div>
+                                </div>
+                                <button type="button" class="btn btn-primary" onclick="savePreferences()">
+                                    <i class="fas fa-save"></i> Save Preferences
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Notifications -->
+                <div class="tab-pane fade" id="notifications">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="mb-0">Notification Settings</h5>
+                        </div>
+                        <div class="card-body">
+                            <form id="notificationSettingsForm">
+                                <div class="form-check form-switch mb-3">
+                                    <input class="form-check-input" type="checkbox" id="emailNotifications" 
+                                           {% if current_user.settings and current_user.settings.email_notifications %}checked{% endif %}>
+                                    <label class="form-check-label" for="emailNotifications">Email Notifications</label>
+                                </div>
+                                <div class="form-check form-switch mb-3">
+                                    <input class="form-check-input" type="checkbox" id="priceAlerts" 
+                                           {% if current_user.settings and current_user.settings.price_alerts %}checked{% endif %}>
+                                    <label class="form-check-label" for="priceAlerts">Price Alerts</label>
+                                </div>
+                                <div class="form-check form-switch mb-3">
+                                    <input class="form-check-input" type="checkbox" id="newsNotifications" 
+                                           {% if current_user.settings and current_user.settings.news_notifications %}checked{% endif %}>
+                                    <label class="form-check-label" for="newsNotifications">News Notifications</label>
+                                </div>
+                                <button type="button" class="btn btn-primary" onclick="saveNotificationSettings()">
+                                    <i class="fas fa-save"></i> Save Notifications
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- API Settings -->
+                <div class="tab-pane fade" id="api">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="mb-0">API Settings</h5>
+                        </div>
+                        <div class="card-body">
+                            <p class="text-muted">Configure your API keys for stock data providers.</p>
+                            <form id="apiSettingsForm">
+                                <div class="mb-3">
+                                    <label class="form-label">API Provider</label>
+                                    <select class="form-select" id="apiProvider">
+                                        <option value="alphavantage">Alpha Vantage</option>
+                                        <option value="finnhub">Finnhub</option>
+                                        <option value="twelvedata">Twelve Data</option>
+                                        <option value="yfinance">Yahoo Finance (yfinance)</option>
+                                    </select>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">API Key</label>
+                                    <input type="text" class="form-control" id="apiKey" 
+                                           placeholder="Enter your API key">
+                                    <small class="text-muted">Get your API key from the provider's website</small>
+                                </div>
+                                <button type="button" class="btn btn-primary" onclick="saveAPISettings()">
+                                    <i class="fas fa-save"></i> Save API Settings
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Password strength indicator
+    document.getElementById('newPassword').addEventListener('input', function() {
+        updateSettingsPasswordStrength(this.value);
+    });
+});
+
+function updateSettingsPasswordStrength(password) {
+    const indicator = document.getElementById('settingsPasswordStrength');
+    let strength = 0;
+    
+    if (password.length >= 8) strength++;
+    if (/[A-Z]/.test(password)) strength++;
+    if (/[a-z]/.test(password)) strength++;
+    if (/[0-9]/.test(password)) strength++;
+    if (/[!@#$%^&*(),.?":{}|<>]/.test(password)) strength++;
+    
+    const levels = ['Very Weak', 'Weak', 'Fair', 'Good', 'Strong'];
+    const colors = ['#dc3545', '#dc3545', '#ffc107', '#28a745', '#28a745'];
+    
+    const percentage = (strength / 5) * 100;
+    indicator.style.width = percentage + '%';
+    indicator.style.backgroundColor = colors[strength] || '#dc3545';
+    indicator.textContent = levels[strength] || 'Very Weak';
+}
+
+function saveProfileSettings() {
+    const data = {
+        full_name: document.getElementById('settingsFullName').value.trim(),
+        username: document.getElementById('settingsUsername').value.trim(),
+        email: document.getElementById('settingsEmail').value.trim(),
+        mobile_number: document.getElementById('settingsMobile').value.trim(),
+        bio: document.getElementById('settingsBio').value.trim(),
+        city: document.getElementById('settingsCity').value.trim(),
+        country: document.getElementById('settingsCountry').value.trim()
+    };
+    
+    fetch('/profile/update', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showToast('Profile updated successfully!', 'success');
+            setTimeout(() => location.reload(), 1000);
+        } else {
+            showToast(data.error || 'Error updating profile', 'danger');
+        }
+    })
+    .catch(error => {
+        showToast('Error updating profile', 'danger');
+        console.error('Profile error:', error);
+    });
+}
+
+function changePassword() {
+    const current = document.getElementById('currentPassword').value;
+    const newPassword = document.getElementById('newPassword').value;
+    const confirm = document.getElementById('confirmNewPassword').value;
+    
+    if (!current || !newPassword || !confirm) {
+        showToast('Please fill in all fields.', 'danger');
+        return;
+    }
+    
+    if (newPassword !== confirm) {
+        showToast('Passwords do not match.', 'danger');
+        return;
+    }
+    
+    fetch('/profile/change-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            current_password: current,
+            new_password: newPassword,
+            confirm_password: confirm
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showToast('Password changed successfully!', 'success');
+            document.getElementById('passwordForm').reset();
+            document.getElementById('settingsPasswordStrength').style.width = '0%';
+        } else {
+            showToast(data.error || 'Error changing password', 'danger');
+        }
+    })
+    .catch(error => {
+        showToast('Error changing password', 'danger');
+        console.error('Password error:', error);
+    });
+}
+
+function deleteAccount() {
+    if (!confirm('Are you sure you want to delete your account? This action cannot be undone.')) {
+        return;
+    }
+    
+    const password = prompt('Please enter your password to confirm:');
+    if (!password) {
+        return;
+    }
+    
+    fetch('/profile/delete', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ password: password })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showToast('Account deleted successfully.', 'success');
+            setTimeout(() => window.location.href = '/', 1500);
+        } else {
+            showToast(data.error || 'Error deleting account', 'danger');
+        }
+    })
+    .catch(error => {
+        showToast('Error deleting account', 'danger');
+        console.error('Delete error:', error);
+    });
+}
+
+function savePreferences() {
+    const data = {
+        theme: document.getElementById('settingsTheme').value,
+        currency: document.getElementById('settingsCurrency').value,
+        timezone: document.getElementById('settingsTimezone').value,
+        language: document.getElementById('settingsLanguage').value,
+        auto_refresh: document.getElementById('settingsAutoRefresh').checked,
+        refresh_interval: parseInt(document.getElementById('settingsRefreshInterval').value) || 30
+    };
+    
+    fetch('/profile/settings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showToast('Preferences saved!', 'success');
+            setTimeout(() => location.reload(), 1000);
+        } else {
+            showToast(data.error || 'Error saving preferences', 'danger');
+        }
+    })
+    .catch(error => {
+        showToast('Error saving preferences', 'danger');
+        console.error('Preferences error:', error);
+    });
+}
+
+function saveNotificationSettings() {
+    const data = {
+        email_notifications: document.getElementById('emailNotifications').checked,
+        price_alerts: document.getElementById('priceAlerts').checked,
+        news_notifications: document.getElementById('newsNotifications').checked
+    };
+    
+    fetch('/profile/notification-settings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showToast('Notification settings saved!', 'success');
+        } else {
+            showToast(data.error || 'Error saving settings', 'danger');
+        }
+    })
+    .catch(error => {
+        showToast('Error saving settings', 'danger');
+        console.error('Notification error:', error);
+    });
+}
+
+function saveAPISettings() {
+    const data = {
+        provider: document.getElementById('apiProvider').value,
+        api_key: document.getElementById('apiKey').value.trim()
+    };
+    
+    fetch('/profile/api-settings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showToast('API settings saved!', 'success');
+        } else {
+            showToast(data.error || 'Error saving API settings', 'danger');
+        }
+    })
+    .catch(error => {
+        showToast('Error saving API settings', 'danger');
+        console.error('API error:', error);
+    });
+}
+</script>
+{% endblock %}

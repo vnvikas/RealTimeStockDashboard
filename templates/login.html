@@ -1,0 +1,95 @@
+{% extends "base.html" %}
+
+{% block title %}Login - {{ app_name }}{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center min-vh-100 align-items-center">
+        <div class="col-md-6 col-lg-5">
+            <div class="card shadow-lg animate-fade-in">
+                <div class="card-body p-5">
+                    <div class="text-center mb-4">
+                        <i class="fas fa-chart-line fa-3x text-primary"></i>
+                        <h3 class="mt-2">Welcome Back</h3>
+                        <p class="text-muted">Login to your account</p>
+                    </div>
+                    
+                    <div id="errorContainer" style="display:none;"></div>
+                    
+                    <form id="loginForm" method="POST" action="{{ url_for('auth.login') }}">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() if csrf_token else '' }}">
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Username or Email</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fas fa-user"></i></span>
+                                <input type="text" class="form-control" id="identifier" 
+                                       name="identifier" placeholder="Enter username or email" required>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Password</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fas fa-lock"></i></span>
+                                <input type="password" class="form-control" id="password" 
+                                       name="password" placeholder="Enter password" required>
+                                <button class="btn btn-outline-secondary" type="button" id="togglePassword">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3 d-flex justify-content-between align-items-center">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="remember" name="remember_me">
+                                <label class="form-check-label" for="remember">Remember Me</label>
+                            </div>
+                            <a href="{{ url_for('auth.forgot_password') }}" class="text-decoration-none">
+                                Forgot Password?
+                            </a>
+                        </div>
+                        
+                        <button type="submit" class="btn btn-primary w-100 py-2">
+                            <i class="fas fa-sign-in-alt"></i> Login
+                        </button>
+                    </form>
+                    
+                    <hr class="my-4">
+                    
+                    <div class="text-center">
+                        <p class="mb-0">Don't have an account? 
+                            <a href="{{ url_for('auth.register') }}" class="text-decoration-none">Register</a>
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Toggle password visibility
+    document.getElementById('togglePassword').addEventListener('click', function() {
+        const password = document.getElementById('password');
+        const type = password.getAttribute('type') === 'password' ? 'text' : 'password';
+        password.setAttribute('type', type);
+        this.querySelector('i').className = type === 'password' ? 'fas fa-eye' : 'fas fa-eye-slash';
+    });
+    
+    // Login form validation
+    document.getElementById('loginForm').addEventListener('submit', function(e) {
+        const identifier = document.getElementById('identifier').value.trim();
+        const password = document.getElementById('password').value;
+        
+        if (!identifier || !password) {
+            e.preventDefault();
+            showToast('Please enter both username/email and password.', 'danger');
+        }
+    });
+});
+</script>
+{% endblock %}

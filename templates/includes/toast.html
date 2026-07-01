@@ -1,0 +1,54 @@
+<!-- Toast Notification Container -->
+<div class="toast-container position-fixed top-0 end-0 p-3" style="z-index: 9999;">
+    <!-- Toast messages will be dynamically added here -->
+</div>
+
+<script>
+// Toast notification function
+function showToast(message, type = 'info', title = '', duration = 5000) {
+    const container = document.querySelector('.toast-container');
+    if (!container) return;
+    
+    const colors = {
+        success: 'bg-success',
+        danger: 'bg-danger',
+        warning: 'bg-warning',
+        info: 'bg-info',
+        primary: 'bg-primary'
+    };
+    
+    const icons = {
+        success: 'fa-check-circle',
+        danger: 'fa-exclamation-circle',
+        warning: 'fa-exclamation-triangle',
+        info: 'fa-info-circle',
+        primary: 'fa-info-circle'
+    };
+    
+    const toast = document.createElement('div');
+    toast.className = `toast align-items-center text-white ${colors[type] || colors.info} border-0`;
+    toast.setAttribute('role', 'alert');
+    toast.setAttribute('aria-live', 'assertive');
+    toast.setAttribute('aria-atomic', 'true');
+    toast.setAttribute('data-bs-delay', duration);
+    
+    toast.innerHTML = `
+        <div class="d-flex">
+            <div class="toast-body">
+                <i class="fas ${icons[type] || icons.info} me-2"></i>
+                ${title ? `<strong>${title}</strong><br>` : ''}
+                ${message}
+            </div>
+            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+        </div>
+    `;
+    
+    container.appendChild(toast);
+    const bsToast = new bootstrap.Toast(toast);
+    bsToast.show();
+    
+    toast.addEventListener('hidden.bs.toast', function() {
+        toast.remove();
+    });
+}
+</script>

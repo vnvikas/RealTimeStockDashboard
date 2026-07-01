@@ -1,0 +1,76 @@
+<div class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+        <h5>{{ app_name }}</h5>
+        <button class="btn btn-sm btn-light" id="sidebarToggle">
+            <i class="fas fa-bars"></i>
+        </button>
+    </div>
+    <ul class="nav flex-column">
+        <li class="nav-item">
+            <a class="nav-link {% if request.endpoint and request.endpoint.startswith('dashboard') %}active{% endif %}" 
+               href="{{ url_for('dashboard.index') }}">
+                <i class="fas fa-home"></i>
+                <span>Dashboard</span>
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link {% if request.endpoint and request.endpoint.startswith('portfolio') %}active{% endif %}" 
+               href="{{ url_for('portfolio.index') }}">
+                <i class="fas fa-briefcase"></i>
+                <span>Portfolio</span>
+                {% if current_user.portfolio %}
+                    <span class="badge bg-primary rounded-pill ms-auto">
+                        {{ current_user.portfolio|length }}
+                    </span>
+                {% endif %}
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link {% if request.endpoint and request.endpoint.startswith('watchlist') %}active{% endif %}" 
+               href="{{ url_for('watchlist.index') }}">
+                <i class="fas fa-star"></i>
+                <span>Watchlist</span>
+                {% if current_user.watchlist %}
+                    <span class="badge bg-primary rounded-pill ms-auto">
+                        {{ current_user.watchlist|length }}
+                    </span>
+                {% endif %}
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link {% if request.endpoint and request.endpoint.startswith('market') %}active{% endif %}" 
+               href="{{ url_for('market.index') }}">
+                <i class="fas fa-chart-bar"></i>
+                <span>Market</span>
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" href="#">
+                <i class="fas fa-newspaper"></i>
+                <span>News</span>
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link {% if request.endpoint and request.endpoint.startswith('profile') %}active{% endif %}" 
+               href="{{ url_for('profile.index') }}">
+                <i class="fas fa-user"></i>
+                <span>Profile</span>
+            </a>
+        </li>
+        {% if current_user.is_admin %}
+            <li class="nav-item">
+                <a class="nav-link {% if request.endpoint and request.endpoint.startswith('admin') %}active{% endif %}" 
+                   href="{{ url_for('admin.dashboard') }}">
+                    <i class="fas fa-shield-alt"></i>
+                    <span>Admin</span>
+                </a>
+            </li>
+        {% endif %}
+        <li class="nav-item">
+            <a class="nav-link" href="{{ url_for('auth.logout') }}">
+                <i class="fas fa-sign-out-alt"></i>
+                <span>Logout</span>
+            </a>
+        </li>
+    </ul>
+</div>

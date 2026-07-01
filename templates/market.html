@@ -1,0 +1,318 @@
+{% extends "base.html" %}
+
+{% block title %}Market - {{ app_name }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col-12">
+            <h2 class="fw-bold">
+                <i class="fas fa-chart-bar text-primary me-2"></i>Market Overview
+            </h2>
+        </div>
+    </div>
+    
+    <!-- Market Status and Indices -->
+    <div class="row g-3 mb-4">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h5 class="mb-0">Market Status</h5>
+                            <span class="market-status {{ market_status.status }} mt-2">
+                                <i class="fas fa-circle me-1" style="font-size: 10px;"></i>
+                                {{ market_status.status|upper }}
+                            </span>
+                            <p class="text-muted mt-2">{{ market_status.time }}</p>
+                        </div>
+                        <div class="text-end">
+                            <div class="small text-muted">Next Open</div>
+                            <div>{{ market_status.next_open or '--:--' }}</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="mb-3">Indices</h5>
+                    <div id="indicesContainer">
+                        {% if indices %}
+                            {% for index in indices %}
+                            <div class="d-flex justify-content-between align-items-center p-2 border-bottom">
+                                <div>
+                                    <strong>{{ index.name }}</strong>
+                                    <div class="small text-muted">{{ index.symbol }}</div>
+                                </div>
+                                <div class="text-end">
+                                    <div>${{ "%.2f"|format(index.price) }}</div>
+                                    <small class="{% if index.change >= 0 %}text-success{% else %}text-danger{% endif %}">
+                                        {{ "%+.2f"|format(index.change) }} ({{ "%+.2f"|format(index.change_percent) }}%)
+                                    </small>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        {% else %}
+                            <div class="text-center text-muted py-3">No indices data available</div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Top Gainers and Losers -->
+    <div class="row g-3 mb-4">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0"><i class="fas fa-arrow-up me-2"></i>Top Gainers</h5>
+                </div>
+                <div class="card-body">
+                    <div id="gainersContainer">
+                        {% if top_gainers %}
+                            {% for stock in top_gainers[:10] %}
+                            <div class="d-flex justify-content-between align-items-center p-2 border-bottom">
+                                <div>
+                                    <a href="{{ url_for('stock.details', symbol=stock.symbol) }}" 
+                                       class="text-decoration-none">
+                                        <strong>{{ stock.symbol }}</strong>
+                                        <div class="small text-muted">{{ stock.name }}</div>
+                                    </a>
+                                </div>
+                                <div class="text-end">
+                                    <div>${{ "%.2f"|format(stock.price) }}</div>
+                                    <small class="text-success">
+                                        {{ "%+.2f"|format(stock.change) }} ({{ "%+.2f"|format(stock.change_percent) }}%)
+                                    </small>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        {% else %}
+                            <div class="text-center text-muted py-3">No gainers data available</div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header bg-danger text-white">
+                    <h5 class="mb-0"><i class="fas fa-arrow-down me-2"></i>Top Losers</h5>
+                </div>
+                <div class="card-body">
+                    <div id="losersContainer">
+                        {% if top_losers %}
+                            {% for stock in top_losers[:10] %}
+                            <div class="d-flex justify-content-between align-items-center p-2 border-bottom">
+                                <div>
+                                    <a href="{{ url_for('stock.details', symbol=stock.symbol) }}" 
+                                       class="text-decoration-none">
+                                        <strong>{{ stock.symbol }}</strong>
+                                        <div class="small text-muted">{{ stock.name }}</div>
+                                    </a>
+                                </div>
+                                <div class="text-end">
+                                    <div>${{ "%.2f"|format(stock.price) }}</div>
+                                    <small class="text-danger">
+                                        {{ "%+.2f"|format(stock.change) }} ({{ "%+.2f"|format(stock.change_percent) }}%)
+                                    </small>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        {% else %}
+                            <div class="text-center text-muted py-3">No losers data available</div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Most Active and Trending -->
+    <div class="row g-3">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-fire me-2"></i>Most Active</h5>
+                </div>
+                <div class="card-body">
+                    <div id="activeContainer">
+                        <div class="text-center text-muted py-3">Loading...</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-rocket me-2"></i>Trending</h5>
+                </div>
+                <div class="card-body">
+                    <div id="trendingContainer">
+                        <div class="text-center text-muted py-3">Loading...</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    loadMarketData();
+    
+    // Auto-refresh every 30 seconds
+    setInterval(loadMarketData, 30000);
+});
+
+function loadMarketData() {
+    fetch('/market/api/market-data')
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                updateMarketData(data.data);
+            }
+        })
+        .catch(error => console.error('Market data error:', error));
+}
+
+function updateMarketData(data) {
+    // Update indices
+    if (data.indices) {
+        const container = document.getElementById('indicesContainer');
+        container.innerHTML = '';
+        data.indices.forEach(function(index) {
+            const div = document.createElement('div');
+            div.className = 'd-flex justify-content-between align-items-center p-2 border-bottom';
+            div.innerHTML = `
+                <div>
+                    <strong>${index.name}</strong>
+                    <div class="small text-muted">${index.symbol}</div>
+                </div>
+                <div class="text-end">
+                    <div>$${index.price ? index.price.toFixed(2) : '0.00'}</div>
+                    <small class="${index.change >= 0 ? 'text-success' : 'text-danger'}">
+                        ${index.change >= 0 ? '+' : ''}${(index.change || 0).toFixed(2)} 
+                        (${index.change >= 0 ? '+' : ''}${(index.change_percent || 0).toFixed(2)}%)
+                    </small>
+                </div>
+            `;
+            container.appendChild(div);
+        });
+    }
+    
+    // Update gainers
+    if (data.top_gainers) {
+        const container = document.getElementById('gainersContainer');
+        container.innerHTML = '';
+        data.top_gainers.forEach(function(stock) {
+            const div = document.createElement('div');
+            div.className = 'd-flex justify-content-between align-items-center p-2 border-bottom';
+            div.innerHTML = `
+                <div>
+                    <a href="/stock/${stock.symbol}" class="text-decoration-none">
+                        <strong>${stock.symbol}</strong>
+                        <div class="small text-muted">${stock.name || stock.symbol}</div>
+                    </a>
+                </div>
+                <div class="text-end">
+                    <div>$${(stock.price || 0).toFixed(2)}</div>
+                    <small class="text-success">
+                        ${stock.change >= 0 ? '+' : ''}${(stock.change || 0).toFixed(2)} 
+                        (${stock.change >= 0 ? '+' : ''}${(stock.change_percent || 0).toFixed(2)}%)
+                    </small>
+                </div>
+            `;
+            container.appendChild(div);
+        });
+    }
+    
+    // Update losers
+    if (data.top_losers) {
+        const container = document.getElementById('losersContainer');
+        container.innerHTML = '';
+        data.top_losers.forEach(function(stock) {
+            const div = document.createElement('div');
+            div.className = 'd-flex justify-content-between align-items-center p-2 border-bottom';
+            div.innerHTML = `
+                <div>
+                    <a href="/stock/${stock.symbol}" class="text-decoration-none">
+                        <strong>${stock.symbol}</strong>
+                        <div class="small text-muted">${stock.name || stock.symbol}</div>
+                    </a>
+                </div>
+                <div class="text-end">
+                    <div>$${(stock.price || 0).toFixed(2)}</div>
+                    <small class="text-danger">
+                        ${stock.change >= 0 ? '+' : ''}${(stock.change || 0).toFixed(2)} 
+                        (${stock.change >= 0 ? '+' : ''}${(stock.change_percent || 0).toFixed(2)}%)
+                    </small>
+                </div>
+            `;
+            container.appendChild(div);
+        });
+    }
+    
+    // Update most active
+    if (data.most_active) {
+        const container = document.getElementById('activeContainer');
+        container.innerHTML = '';
+        data.most_active.slice(0, 10).forEach(function(stock) {
+            const div = document.createElement('div');
+            div.className = 'd-flex justify-content-between align-items-center p-2 border-bottom';
+            div.innerHTML = `
+                <div>
+                    <a href="/stock/${stock.symbol}" class="text-decoration-none">
+                        <strong>${stock.symbol}</strong>
+                        <div class="small text-muted">${stock.name || stock.symbol}</div>
+                    </a>
+                </div>
+                <div class="text-end">
+                    <div>$${(stock.price || 0).toFixed(2)}</div>
+                    <small class="text-muted">Vol: ${formatNumber(stock.volume || 0)}</small>
+                </div>
+            `;
+            container.appendChild(div);
+        });
+    }
+    
+    // Update trending
+    if (data.trending) {
+        const container = document.getElementById('trendingContainer');
+        container.innerHTML = '';
+        data.trending.slice(0, 10).forEach(function(stock) {
+            const div = document.createElement('div');
+            div.className = 'd-flex justify-content-between align-items-center p-2 border-bottom';
+            div.innerHTML = `
+                <div>
+                    <a href="/stock/${stock.symbol}" class="text-decoration-none">
+                        <strong>${stock.symbol}</strong>
+                        <div class="small text-muted">${stock.name || stock.symbol}</div>
+                    </a>
+                </div>
+                <div class="text-end">
+                    <div>$${(stock.price || 0).toFixed(2)}</div>
+                    <small class="${stock.change >= 0 ? 'text-success' : 'text-danger'}">
+                        ${stock.change >= 0 ? '+' : ''}${(stock.change_percent || 0).toFixed(2)}%
+                    </small>
+                </div>
+            `;
+            container.appendChild(div);
+        });
+    }
+}
+
+function formatNumber(num) {
+    if (!num) return '0';
+    if (num >= 1e9) return (num / 1e9).toFixed(1) + 'B';
+    if (num >= 1e6) return (num / 1e6).toFixed(1) + 'M';
+    if (num >= 1e3) return (num / 1e3).toFixed(1) + 'K';
+    return num.toString();
+}
+</script>
+{% endblock %}

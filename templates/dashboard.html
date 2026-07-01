@@ -1,0 +1,361 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - {{ app_name }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid dashboard-container">
+    <!-- Welcome Section -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h2 class="fw-bold">
+                        <i class="fas fa-home text-primary me-2"></i>
+                        Welcome back, {{ current_user.get_full_name() }}!
+                    </h2>
+                    <p class="text-muted">Here's your portfolio overview for today</p>
+                </div>
+                <div>
+                    <span class="market-status {{ market_status.status }}">
+                        <i class="fas fa-circle me-1" style="font-size: 10px;"></i>
+                        {{ market_status.status|upper }}
+                    </span>
+                    <small class="text-muted d-block">{{ market_status.time }}</small>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Stats Cards -->
+    <div class="row g-3 mb-4">
+        <div class="col-md-3 col-6">
+            <div class="card stat-card animate-fade-in">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <p class="text-muted mb-1">Portfolio Value</p>
+                            <h4 class="mb-0" id="portfolioValue">
+                                {{ portfolio_summary.total_current_value|format_currency }}
+                            </h4>
+                        </div>
+                        <div class="stat-icon text-primary">
+                            <i class="fas fa-wallet fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3 col-6">
+            <div class="card stat-card animate-fade-in">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <p class="text-muted mb-1">Today's P/L</p>
+                            <h4 class="mb-0" id="profitLoss">
+                                {{ portfolio_summary.total_profit_loss|format_currency }}
+                            </h4>
+                            <small class="{% if portfolio_summary.total_profit_loss >= 0 %}text-success{% else %}text-danger{% endif %}">
+                                {{ portfolio_summary.total_profit_loss_percent|format_percentage }}
+                            </small>
+                        </div>
+                        <div class="stat-icon text-{% if portfolio_summary.total_profit_loss >= 0 %}success{% else %}danger{% endif %}">
+                            <i class="fas fa-{% if portfolio_summary.total_profit_loss >= 0 %}arrow-up{% else %}arrow-down{% endif %} fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3 col-6">
+            <div class="card stat-card animate-fade-in">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <p class="text-muted mb-1">Watchlist</p>
+                            <h4 class="mb-0" id="watchlistCount">
+                                {{ watchlist_summary.total_stocks }}
+                            </h4>
+                            <small class="text-muted">{{ watchlist_summary.favorites }} favorites</small>
+                        </div>
+                        <div class="stat-icon text-warning">
+                            <i class="fas fa-star fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3 col-6">
+            <div class="card stat-card animate-fade-in">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <p class="text-muted mb-1">Holdings</p>
+                            <h4 class="mb-0" id="stockCount">
+                                {{ portfolio_summary.total_stocks }}
+                            </h4>
+                            <small class="text-muted">Total stocks</small>
+                        </div>
+                        <div class="stat-icon text-info">
+                            <i class="fas fa-chart-pie fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Charts Row -->
+    <div class="row g-3 mb-4">
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-chart-line me-2"></i>Portfolio Growth</h5>
+                </div>
+                <div class="card-body">
+                    <div class="chart-container-full">
+                        <canvas id="portfolioGrowthChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-chart-pie me-2"></i>Sector Distribution</h5>
+                </div>
+                <div class="card-body">
+                    <div class="chart-container">
+                        <canvas id="sectorDistributionChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Performance and Watchlist -->
+    <div class="row g-3">
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-chart-bar me-2"></i>Stock Performance</h5>
+                </div>
+                <div class="card-body">
+                    <div class="chart-container-full">
+                        <canvas id="performanceChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-4">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0"><i class="fas fa-star me-2"></i>Watchlist</h5>
+                    <a href="{{ url_for('watchlist.index') }}" class="btn btn-sm btn-outline-primary">
+                        View All
+                    </a>
+                </div>
+                <div class="card-body">
+                    <div id="watchlistContainer">
+                        {% if current_user.watchlist %}
+                            {% for item in current_user.watchlist[:5] %}
+                                <div class="d-flex justify-content-between align-items-center p-2 border-bottom">
+                                    <div>
+                                        <a href="{{ url_for('stock.details', symbol=item.stock.symbol) }}" 
+                                           class="text-decoration-none">
+                                            <strong>{{ item.stock.symbol }}</strong>
+                                            <small class="text-muted d-block">{{ item.stock.company_name|truncate(20) }}</small>
+                                        </a>
+                                    </div>
+                                    <div class="text-end">
+                                        <div>${{ "%.2f"|format(item.stock.get_current_price() or 0) }}</div>
+                                        {% set change, change_percent = item.stock.get_price_change() %}
+                                        <small class="{% if change >= 0 %}text-success{% else %}text-danger{% endif %}">
+                                            {{ "%+.2f"|format(change) }} ({{ "%+.2f"|format(change_percent) }}%)
+                                        </small>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                            {% if current_user.watchlist|length > 5 %}
+                                <div class="text-center mt-2">
+                                    <a href="{{ url_for('watchlist.index') }}" class="text-decoration-none">
+                                        +{{ current_user.watchlist|length - 5 }} more stocks
+                                    </a>
+                                </div>
+                            {% endif %}
+                        {% else %}
+                            <div class="text-center text-muted py-4">
+                                <i class="fas fa-inbox fa-2x mb-2 d-block"></i>
+                                <p>No stocks in watchlist</p>
+                                <a href="{{ url_for('watchlist.index') }}" class="btn btn-sm btn-primary">
+                                    Add Stocks
+                                </a>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Notifications -->
+    {% if notifications_count > 0 %}
+    <div class="row mt-3">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-bell me-2"></i>Notifications</h5>
+                </div>
+                <div class="card-body">
+                    {% for notification in recent_notifications[:5] %}
+                        <div class="alert alert-{{ notification.type|lower }} alert-dismissible fade show">
+                            <strong>{{ notification.title }}</strong>
+                            <p class="mb-0">{{ notification.message }}</p>
+                            <small class="text-muted">{{ notification.created_at|timeago }}</small>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Load dashboard data
+    loadDashboardData();
+    
+    // Auto-refresh if enabled
+
+    const body = document.body;
+
+    const autoRefresh = body.dataset.autoRefresh === "true";
+    const refreshInterval = Number(body.dataset.refreshInterval);
+
+    if (autoRefresh) {
+        setInterval(() => {
+            loadDashboardData();
+        }, refreshInterval);
+    }
+
+});
+
+function loadDashboardData() {
+    fetch('/dashboard/api/dashboard-data')
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                updateCharts(data);
+                updateStats(data);
+            }
+        })
+        .catch(error => console.error('Error loading dashboard:', error));
+}
+
+function updateCharts(data) {
+    // Update Portfolio Growth Chart
+    if (data.portfolio && data.portfolio.dates) {
+        const ctx = document.getElementById('portfolioGrowthChart');
+        if (ctx) {
+            const chart = window.portfolioGrowthChart || new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: data.portfolio.dates || [],
+                    datasets: [{
+                        label: 'Portfolio Value',
+                        data: data.portfolio.values || [],
+                        borderColor: '#3498db',
+                        backgroundColor: 'rgba(52, 152, 219, 0.1)',
+                        fill: true,
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: true, position: 'top' } },
+                    scales: {
+                        x: { grid: { display: false } },
+                        y: { grid: { color: 'rgba(0,0,0,0.05)' } }
+                    }
+                }
+            });
+            window.portfolioGrowthChart = chart;
+        }
+    }
+    
+    // Update Sector Distribution
+    if (data.sectors) {
+        const ctx = document.getElementById('sectorDistributionChart');
+        if (ctx) {
+            const chart = window.sectorDistributionChart || new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: Object.keys(data.sectors) || [],
+                    datasets: [{
+                        data: Object.values(data.sectors) || [],
+                        backgroundColor: ['#3498db', '#2ecc71', '#e74c3c', '#f39c12', '#9b59b6', '#1abc9c'],
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { position: 'right' } }
+                }
+            });
+            window.sectorDistributionChart = chart;
+        }
+    }
+    
+    // Update Performance Chart
+    if (data.performance && data.performance.symbols) {
+        const ctx = document.getElementById('performanceChart');
+        if (ctx) {
+            const colors = data.performance.profit_loss.map(v => 
+                v >= 0 ? 'rgba(46, 204, 113, 0.7)' : 'rgba(231, 76, 60, 0.7)'
+            );
+            const chart = window.performanceChart || new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: data.performance.symbols || [],
+                    datasets: [{
+                        label: 'Profit/Loss %',
+                        data: data.performance.profit_loss || [],
+                        backgroundColor: colors,
+                        borderColor: colors.map(c => c.replace('0.7', '1')),
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        x: { grid: { display: false } },
+                        y: { grid: { color: 'rgba(0,0,0,0.05)' } }
+                    }
+                }
+            });
+            window.performanceChart = chart;
+        }
+    }
+}
+
+function updateStats(data) {
+    if (data.stats) {
+        document.getElementById('portfolioValue').textContent = formatCurrency(data.stats.total_value);
+        const pl = data.stats.profit_loss || 0;
+        document.getElementById('profitLoss').textContent = formatCurrency(pl);
+        document.getElementById('watchlistCount').textContent = data.stats.watchlist_count || 0;
+        document.getElementById('stockCount').textContent = data.stats.stock_count || 0;
+    }
+}
+</script>
+{% endblock %}

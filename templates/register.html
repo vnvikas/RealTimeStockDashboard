@@ -1,0 +1,237 @@
+{% extends "base.html" %}
+
+{% block title %}Register - {{ app_name }}{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center min-vh-100 align-items-center">
+        <div class="col-md-8 col-lg-6">
+            <div class="card shadow-lg animate-fade-in">
+                <div class="card-body p-5">
+                    <div class="text-center mb-4">
+                        <i class="fas fa-user-plus fa-3x text-primary"></i>
+                        <h3 class="mt-2">Create Account</h3>
+                        <p class="text-muted">Join our community of smart investors</p>
+                    </div>
+                    
+                    <div id="errorContainer" style="display:none;"></div>
+                    
+                    <form id="registerForm" method="POST" action="{{ url_for('auth.register') }}" 
+                          enctype="multipart/form-data">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() if csrf_token else '' }}">
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Full Name</label>
+                                <div class="input-group">
+                                    <span class="input-group-text"><i class="fas fa-user"></i></span>
+                                    <input type="text" class="form-control" id="full_name" 
+                                           name="full_name" placeholder="John Doe" required>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Username</label>
+                                <div class="input-group">
+                                    <span class="input-group-text"><i class="fas fa-at"></i></span>
+                                    <input type="text" class="form-control" id="username" 
+                                           name="username" placeholder="johndoe" required>
+                                </div>
+                                <div id="usernameFeedback"></div>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Email</label>
+                                <div class="input-group">
+                                    <span class="input-group-text"><i class="fas fa-envelope"></i></span>
+                                    <input type="email" class="form-control" id="email" 
+                                           name="email" placeholder="john@example.com" required>
+                                </div>
+                                <div id="emailFeedback"></div>
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Mobile Number</label>
+                                <div class="input-group">
+                                    <span class="input-group-text"><i class="fas fa-phone"></i></span>
+                                    <input type="tel" class="form-control" id="mobile" 
+                                           name="mobile" placeholder="+1234567890">
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Password</label>
+                                <div class="input-group">
+                                    <span class="input-group-text"><i class="fas fa-lock"></i></span>
+                                    <input type="password" class="form-control" id="password" 
+                                           name="password" placeholder="Create password" required>
+                                    <button class="btn btn-outline-secondary" type="button" id="togglePassword">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                </div>
+                                <div class="mt-2">
+                                    <div class="progress" style="height: 5px;">
+                                        <div id="passwordStrength" class="progress-bar" 
+                                             role="progressbar" style="width: 0%;" 
+                                             aria-valuenow="0" aria-valuemin="0" aria-valuemax="5"></div>
+                                    </div>
+                                    <small class="text-muted">Password strength indicator</small>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Confirm Password</label>
+                                <div class="input-group">
+                                    <span class="input-group-text"><i class="fas fa-check"></i></span>
+                                    <input type="password" class="form-control" id="confirm_password" 
+                                           name="confirm_password" placeholder="Confirm password" required>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Profile Picture</label>
+                            <input type="file" class="form-control" id="profile_picture" 
+                                   name="profile_picture" accept="image/*">
+                            <small class="text-muted">Optional. Max size: 5MB</small>
+                        </div>
+                        
+                        <div class="mb-3 form-check">
+                            <input type="checkbox" class="form-check-input" id="terms" required>
+                            <label class="form-check-label" for="terms">
+                                I agree to the <a href="#" class="text-decoration-none">Terms of Service</a> 
+                                and <a href="#" class="text-decoration-none">Privacy Policy</a>
+                            </label>
+                        </div>
+                        
+                        <button type="submit" class="btn btn-primary w-100 py-2">
+                            <i class="fas fa-user-plus"></i> Create Account
+                        </button>
+                    </form>
+                    
+                    <hr class="my-4">
+                    
+                    <div class="text-center">
+                        <p class="mb-0">Already have an account? 
+                            <a href="{{ url_for('auth.login') }}" class="text-decoration-none">Login</a>
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Toggle password visibility
+    document.getElementById('togglePassword').addEventListener('click', function() {
+        const password = document.getElementById('password');
+        const type = password.getAttribute('type') === 'password' ? 'text' : 'password';
+        password.setAttribute('type', type);
+        this.querySelector('i').className = type === 'password' ? 'fas fa-eye' : 'fas fa-eye-slash';
+    });
+    
+    // Password strength indicator
+    document.getElementById('password').addEventListener('input', function() {
+        updatePasswordStrength(this.value);
+    });
+    
+    // Username availability check
+    let usernameTimeout;
+    document.getElementById('username').addEventListener('input', function() {
+        clearTimeout(usernameTimeout);
+        const username = this.value.trim();
+        if (username.length >= 3) {
+            usernameTimeout = setTimeout(() => checkUsernameAvailability(username), 500);
+        }
+    });
+    
+    // Email availability check
+    let emailTimeout;
+    document.getElementById('email').addEventListener('input', function() {
+        clearTimeout(emailTimeout);
+        const email = this.value.trim();
+        if (email && /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(email)) {
+            emailTimeout = setTimeout(() => checkEmailAvailability(email), 500);
+        }
+    });
+});
+
+function updatePasswordStrength(password) {
+    const indicator = document.getElementById('passwordStrength');
+    let strength = 0;
+    
+    if (password.length >= 8) strength++;
+    if (/[A-Z]/.test(password)) strength++;
+    if (/[a-z]/.test(password)) strength++;
+    if (/[0-9]/.test(password)) strength++;
+    if (/[!@#$%^&*(),.?":{}|<>]/.test(password)) strength++;
+    
+    const levels = ['Very Weak', 'Weak', 'Fair', 'Good', 'Strong'];
+    const colors = ['#dc3545', '#dc3545', '#ffc107', '#28a745', '#28a745'];
+    
+    const percentage = (strength / 5) * 100;
+    indicator.style.width = percentage + '%';
+    indicator.style.backgroundColor = colors[strength] || '#dc3545';
+    indicator.textContent = levels[strength] || 'Very Weak';
+    indicator.setAttribute('aria-valuenow', strength);
+}
+
+function checkUsernameAvailability(username) {
+    const feedback = document.getElementById('usernameFeedback');
+    fetch('/auth/check-availability', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ field: 'username', value: username })
+    })
+    .then(response => response.json())
+    .then(data => {
+        const input = document.getElementById('username');
+        if (data.available) {
+            feedback.className = 'valid-feedback d-block';
+            feedback.textContent = 'Username is available.';
+            input.classList.add('is-valid');
+            input.classList.remove('is-invalid');
+        } else {
+            feedback.className = 'invalid-feedback d-block';
+            feedback.textContent = 'Username is already taken.';
+            input.classList.add('is-invalid');
+            input.classList.remove('is-valid');
+        }
+    })
+    .catch(error => console.error('Error:', error));
+}
+
+function checkEmailAvailability(email) {
+    const feedback = document.getElementById('emailFeedback');
+    fetch('/auth/check-availability', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ field: 'email', value: email })
+    })
+    .then(response => response.json())
+    .then(data => {
+        const input = document.getElementById('email');
+        if (data.available) {
+            feedback.className = 'valid-feedback d-block';
+            feedback.textContent = 'Email is available.';
+            input.classList.add('is-valid');
+            input.classList.remove('is-invalid');
+        } else {
+            feedback.className = 'invalid-feedback d-block';
+            feedback.textContent = 'Email is already registered.';
+            input.classList.add('is-invalid');
+            input.classList.remove('is-valid');
+        }
+    })
+    .catch(error => console.error('Error:', error));
+}
+</script>
+{% endblock %}

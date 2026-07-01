@@ -1,0 +1,478 @@
+{% extends "base.html" %}
+
+{% block title %}Admin Settings - {{ app_name }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col-12">
+            <h2 class="fw-bold">
+                <i class="fas fa-cogs text-primary me-2"></i>Admin Settings
+            </h2>
+        </div>
+    </div>
+    
+    <div class="row">
+        <div class="col-md-3">
+            <div class="list-group">
+                <a href="#general" class="list-group-item list-group-item-action active" data-bs-toggle="tab">
+                    <i class="fas fa-globe me-2"></i>General
+                </a>
+                <a href="#api" class="list-group-item list-group-item-action" data-bs-toggle="tab">
+                    <i class="fas fa-code me-2"></i>API Settings
+                </a>
+                <a href="#security" class="list-group-item list-group-item-action" data-bs-toggle="tab">
+                    <i class="fas fa-shield-alt me-2"></i>Security
+                </a>
+                <a href="#maintenance" class="list-group-item list-group-item-action" data-bs-toggle="tab">
+                    <i class="fas fa-tools me-2"></i>Maintenance
+                </a>
+                <a href="#logs" class="list-group-item list-group-item-action" data-bs-toggle="tab">
+                    <i class="fas fa-file-alt me-2"></i>Logs
+                </a>
+            </div>
+        </div>
+        
+        <div class="col-md-9">
+            <div class="tab-content">
+                <!-- General Settings -->
+                <div class="tab-pane fade show active" id="general">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="mb-0">General Settings</h5>
+                        </div>
+                        <div class="card-body">
+                            <form id="generalSettingsForm">
+                                <div class="mb-3">
+                                    <label class="form-label">Site Name</label>
+                                    <input type="text" class="form-control" id="siteName" 
+                                           value="{{ app_name }}" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Site Description</label>
+                                    <textarea class="form-control" id="siteDescription" rows="3">Your complete stock market tracking and portfolio management solution</textarea>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Default Currency</label>
+                                    <select class="form-select" id="defaultCurrency">
+                                        <option value="USD">USD ($)</option>
+                                        <option value="EUR">EUR (€)</option>
+                                        <option value="GBP">GBP (£)</option>
+                                        <option value="INR">INR (₹)</option>
+                                    </select>
+                                </div>
+                                <div class="form-check form-switch mb-3">
+                                    <input class="form-check-input" type="checkbox" id="registrationEnabled" checked>
+                                    <label class="form-check-label" for="registrationEnabled">Enable User Registration</label>
+                                </div>
+                                <button type="button" class="btn btn-primary" onclick="saveGeneralSettings()">
+                                    <i class="fas fa-save"></i> Save Settings
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- API Settings -->
+                <div class="tab-pane fade" id="api">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="mb-0">API Settings</h5>
+                        </div>
+                        <div class="card-body">
+                            <form id="apiSettingsForm">
+                                <div class="mb-3">
+                                    <label class="form-label">API Provider</label>
+                                    <select class="form-select" id="apiProvider">
+                                        <option value="alphavantage">Alpha Vantage</option>
+                                        <option value="finnhub">Finnhub</option>
+                                        <option value="twelvedata">Twelve Data</option>
+                                        <option value="yfinance">Yahoo Finance</option>
+                                    </select>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">API Key</label>
+                                    <input type="text" class="form-control" id="apiKey" 
+                                           placeholder="Enter your API key">
+                                    <small class="text-muted">Get your API key from the provider's website</small>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">API Rate Limit (calls per minute)</label>
+                                    <input type="number" class="form-control" id="apiRateLimit" value="5" min="1" max="100">
+                                </div>
+                                <div class="form-check form-switch mb-3">
+                                    <input class="form-check-input" type="checkbox" id="apiEnabled" checked>
+                                    <label class="form-check-label" for="apiEnabled">Enable API Integration</label>
+                                </div>
+                                <button type="button" class="btn btn-primary" onclick="saveAPISettings()">
+                                    <i class="fas fa-save"></i> Save API Settings
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Security Settings -->
+                <div class="tab-pane fade" id="security">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="mb-0">Security Settings</h5>
+                        </div>
+                        <div class="card-body">
+                            <form id="securitySettingsForm">
+                                <div class="mb-3">
+                                    <label class="form-label">Minimum Password Length</label>
+                                    <input type="number" class="form-control" id="minPasswordLength" value="8" min="6" max="20">
+                                </div>
+                                <div class="form-check form-switch mb-3">
+                                    <input class="form-check-input" type="checkbox" id="passwordComplexity" checked>
+                                    <label class="form-check-label" for="passwordComplexity">Require Password Complexity</label>
+                                </div>
+                                <div class="form-check form-switch mb-3">
+                                    <input class="form-check-input" type="checkbox" id="twoFactorAuth">
+                                    <label class="form-check-label" for="twoFactorAuth">Enable Two-Factor Authentication</label>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Session Timeout (minutes)</label>
+                                    <input type="number" class="form-control" id="sessionTimeout" value="30" min="5" max="1440">
+                                </div>
+                                <div class="form-check form-switch mb-3">
+                                    <input class="form-check-input" type="checkbox" id="loginAttempts" checked>
+                                    <label class="form-check-label" for="loginAttempts">Enable Login Attempt Limiting</label>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Max Login Attempts</label>
+                                    <input type="number" class="form-control" id="maxLoginAttempts" value="5" min="3" max="10">
+                                </div>
+                                <button type="button" class="btn btn-primary" onclick="saveSecuritySettings()">
+                                    <i class="fas fa-save"></i> Save Security Settings
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Maintenance -->
+                <div class="tab-pane fade" id="maintenance">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="mb-0">Maintenance</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="alert alert-warning">
+                                <i class="fas fa-exclamation-triangle me-2"></i>
+                                These actions can affect the entire application. Please proceed with caution.
+                            </div>
+                            
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <div class="card">
+                                        <div class="card-body text-center">
+                                            <i class="fas fa-database fa-2x text-primary mb-2"></i>
+                                            <h6>Clear Cache</h6>
+                                            <p class="text-muted small">Clear all cached data</p>
+                                            <button class="btn btn-warning" onclick="clearCache()">
+                                                <i class="fas fa-trash"></i> Clear Cache
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="card">
+                                        <div class="card-body text-center">
+                                            <i class="fas fa-database fa-2x text-danger mb-2"></i>
+                                            <h6>Backup Database</h6>
+                                            <p class="text-muted small">Create a backup of the database</p>
+                                            <button class="btn btn-success" onclick="backupDatabase()">
+                                                <i class="fas fa-download"></i> Backup Now
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="card">
+                                        <div class="card-body text-center">
+                                            <i class="fas fa-sync fa-2x text-info mb-2"></i>
+                                            <h6>Update Stock Data</h6>
+                                            <p class="text-muted small">Fetch latest stock data from API</p>
+                                            <button class="btn btn-primary" onclick="updateStockData()">
+                                                <i class="fas fa-sync"></i> Update Now
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="card">
+                                        <div class="card-body text-center">
+                                            <i class="fas fa-power-off fa-2x text-danger mb-2"></i>
+                                            <h6>Maintenance Mode</h6>
+                                            <p class="text-muted small">Put the application in maintenance mode</p>
+                                            <button class="btn btn-danger" onclick="toggleMaintenance()">
+                                                <i class="fas fa-power-off"></i> Toggle Mode
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Logs -->
+                <div class="tab-pane fade" id="logs">
+                    <div class="card">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <h5 class="mb-0"><i class="fas fa-file-alt me-2"></i>System Logs</h5>
+                            <button class="btn btn-sm btn-outline-secondary" onclick="refreshLogs()">
+                                <i class="fas fa-sync"></i> Refresh
+                            </button>
+                        </div>
+                        <div class="card-body">
+                            <div id="logContainer" style="max-height: 500px; overflow-y: auto;">
+                                <div class="text-center py-4">
+                                    <div class="spinner-border text-primary"></div>
+                                    <p class="mt-2">Loading logs...</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    loadLogs();
+});
+
+function saveGeneralSettings() {
+    const data = {
+        site_name: document.getElementById('siteName').value.trim(),
+        site_description: document.getElementById('siteDescription').value.trim(),
+        default_currency: document.getElementById('defaultCurrency').value,
+        registration_enabled: document.getElementById('registrationEnabled').checked
+    };
+    
+    fetch('/admin/api/settings/general', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': '{{ csrf_token() }}'
+        },
+        body: JSON.stringify(data)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showToast('General settings saved!', 'success');
+        } else {
+            showToast(data.error || 'Error saving settings', 'danger');
+        }
+    })
+    .catch(error => {
+        showToast('Error saving settings', 'danger');
+        console.error('Settings error:', error);
+    });
+}
+
+function saveAPISettings() {
+    const data = {
+        provider: document.getElementById('apiProvider').value,
+        api_key: document.getElementById('apiKey').value.trim(),
+        rate_limit: parseInt(document.getElementById('apiRateLimit').value) || 5,
+        enabled: document.getElementById('apiEnabled').checked
+    };
+    
+    fetch('/admin/api/settings/api', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': '{{ csrf_token() }}'
+        },
+        body: JSON.stringify(data)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showToast('API settings saved!', 'success');
+        } else {
+            showToast(data.error || 'Error saving API settings', 'danger');
+        }
+    })
+    .catch(error => {
+        showToast('Error saving API settings', 'danger');
+        console.error('API error:', error);
+    });
+}
+
+function saveSecuritySettings() {
+    const data = {
+        min_password_length: parseInt(document.getElementById('minPasswordLength').value) || 8,
+        password_complexity: document.getElementById('passwordComplexity').checked,
+        two_factor_auth: document.getElementById('twoFactorAuth').checked,
+        session_timeout: parseInt(document.getElementById('sessionTimeout').value) || 30,
+        login_attempts: document.getElementById('loginAttempts').checked,
+        max_login_attempts: parseInt(document.getElementById('maxLoginAttempts').value) || 5
+    };
+    
+    fetch('/admin/api/settings/security', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': '{{ csrf_token() }}'
+        },
+        body: JSON.stringify(data)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showToast('Security settings saved!', 'success');
+        } else {
+            showToast(data.error || 'Error saving security settings', 'danger');
+        }
+    })
+    .catch(error => {
+        showToast('Error saving security settings', 'danger');
+        console.error('Security error:', error);
+    });
+}
+
+function clearCache() {
+    if (!confirm('Are you sure you want to clear the cache?')) return;
+    
+    fetch('/admin/api/maintenance/clear-cache', {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': '{{ csrf_token() }}'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showToast('Cache cleared successfully!', 'success');
+        } else {
+            showToast(data.error || 'Error clearing cache', 'danger');
+        }
+    })
+    .catch(error => {
+        showToast('Error clearing cache', 'danger');
+        console.error('Cache error:', error);
+    });
+}
+
+function backupDatabase() {
+    if (!confirm('Create a backup of the database?')) return;
+    
+    fetch('/admin/api/maintenance/backup', {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': '{{ csrf_token() }}'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showToast('Database backup created!', 'success');
+            // Download backup
+            if (data.url) {
+                window.location.href = data.url;
+            }
+        } else {
+            showToast(data.error || 'Error creating backup', 'danger');
+        }
+    })
+    .catch(error => {
+        showToast('Error creating backup', 'danger');
+        console.error('Backup error:', error);
+    });
+}
+
+function updateStockData() {
+    if (!confirm('Fetch latest stock data from API?')) return;
+    
+    fetch('/admin/api/maintenance/update-stocks', {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': '{{ csrf_token() }}'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showToast('Stock data updated successfully!', 'success');
+        } else {
+            showToast(data.error || 'Error updating stock data', 'danger');
+        }
+    })
+    .catch(error => {
+        showToast('Error updating stock data', 'danger');
+        console.error('Update error:', error);
+    });
+}
+
+function toggleMaintenance() {
+    if (!confirm('Toggle maintenance mode?')) return;
+    
+    fetch('/admin/api/maintenance/toggle', {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': '{{ csrf_token() }}'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showToast('Maintenance mode ' + (data.enabled ? 'enabled' : 'disabled'), 'success');
+        } else {
+            showToast(data.error || 'Error toggling maintenance mode', 'danger');
+        }
+    })
+    .catch(error => {
+        showToast('Error toggling maintenance mode', 'danger');
+        console.error('Maintenance error:', error);
+    });
+}
+
+function loadLogs() {
+    const container = document.getElementById('logContainer');
+    
+    fetch('/admin/api/logs')
+        .then(response => response.json())
+        .then(data => {
+            if (data.success && data.logs) {
+                container.innerHTML = data.logs.map(log => `
+                    <div class="border-bottom py-2 ${log.level === 'ERROR' ? 'text-danger' : ''} 
+                         ${log.level === 'WARNING' ? 'text-warning' : ''}">
+                        <span class="text-muted small">[${log.timestamp}]</span>
+                        <span class="badge bg-${getLogColor(log.level)}">${log.level}</span>
+                        ${log.message}
+                    </div>
+                `).join('');
+            } else {
+                container.innerHTML = '<div class="text-center text-muted py-4">No logs available</div>';
+            }
+        })
+        .catch(error => {
+            container.innerHTML = '<div class="text-center text-danger py-4">Error loading logs</div>';
+        });
+}
+
+function getLogColor(level) {
+    const colors = {
+        'INFO': 'info',
+        'WARNING': 'warning',
+        'ERROR': 'danger',
+        'DEBUG': 'secondary'
+    };
+    return colors[level] || 'secondary';
+}
+
+function refreshLogs() {
+    loadLogs();
+}
+</script>
+{% endblock %}

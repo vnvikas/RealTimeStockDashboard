@@ -1,0 +1,370 @@
+{% extends "base.html" %}
+
+{% block title %}Watchlist - {{ app_name }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <h2 class="fw-bold">
+                    <i class="fas fa-star text-warning me-2"></i>Watchlist
+                </h2>
+                <button class="btn btn-primary" onclick="showAddStockModal()">
+                    <i class="fas fa-plus"></i> Add Stock
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Watchlist Table -->
+    <div class="card">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover" id="watchlistTable">
+                    <thead>
+                        <tr>
+                            <th>Symbol</th>
+                            <th>Company</th>
+                            <th>Price</th>
+                            <th>Change</th>
+                            <th>Volume</th>
+                            <th>Alert</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% if watchlist_entries %}
+                            {% for entry in watchlist_entries %}
+                            <tr>
+                                <td>
+                                    <a href="{{ url_for('stock.details', symbol=entry.stock.symbol) }}" 
+                                       class="text-decoration-none fw-bold">
+                                        {{ entry.stock.symbol }}
+                                    </a>
+                                    {% if entry.is_favorite %}
+                                        <i class="fas fa-star text-warning ms-1"></i>
+                                    {% endif %}
+                                </td>
+                                <td>{{ entry.stock.company_name|truncate(30) }}</td>
+                                <td class="stock-price">
+                                    ${{ "%.2f"|format(entry.stock.get_current_price() or 0) }}
+                                </td>
+                                <td>
+                                    {% set change, change_percent = entry.stock.get_price_change() %}
+                                    <span class="stock-change {% if change >= 0 %}positive{% else %}negative{% endif %}">
+                                        {{ "%+.2f"|format(change) }} ({{ "%+.2f"|format(change_percent) }}%)
+                                    </span>
+                                </td>
+                                <td>{{ entry.stock.get_volume()|int|format_number }}</td>
+                                <td>
+                                    {% if entry.alert_enabled and entry.price_alert %}
+                                        <span class="badge bg-info">
+                                            ${{ "%.2f"|format(entry.price_alert) }}
+                                        </span>
+                                    {% else %}
+                                        <span class="badge bg-secondary">Disabled</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <div class="btn-group btn-group-sm">
+
+    <button
+        class="btn btn-outline-warning favorite-btn"
+        data-id="{{ entry.id }}"
+        title="Toggle Favorite">
+        <i class="fas fa-star"></i>
+    </button>
+
+    <button
+        class="btn btn-outline-primary alert-btn"
+        data-id="{{ entry.id }}"
+        title="Set Price Alert">
+        <i class="fas fa-bell"></i>
+    </button>
+
+    <button
+        class="btn btn-outline-danger remove-btn"
+        data-id="{{ entry.id }}"
+        title="Remove">
+        <i class="fas fa-times"></i>
+    </button>
+
+</div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        {% else %}
+                            <tr>
+                                <td colspan="7" class="text-center py-4">
+                                    <i class="fas fa-inbox fa-3x text-muted mb-3 d-block"></i>
+                                    <p class="text-muted">Your watchlist is empty</p>
+                                    <button class="btn btn-primary" onclick="showAddStockModal()">
+                                        <i class="fas fa-plus"></i> Add First Stock
+                                    </button>
+                                </td>
+                            </tr>
+                        {% endif %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add Stock Modal -->
+<div class="modal fade" id="addStockModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Add to Watchlist</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="addStockForm">
+                    <div class="mb-3">
+                        <label class="form-label">Stock Symbol</label>
+                        <input type="text" class="form-control" id="stockSymbol" 
+                               placeholder="e.g., AAPL" required>
+                        <div id="stockSearchResults" class="dropdown-menu w-100" style="display:none;"></div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Notes</label>
+                        <textarea class="form-control" id="stockNotes" rows="2" 
+                                  placeholder="Add notes about this stock"></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Price Alert (Optional)</label>
+                        <input type="number" class="form-control" id="priceAlert" 
+                               placeholder="Enter alert price" step="0.01">
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" onclick="addToWatchlist()">
+                    <i class="fas fa-plus"></i> Add to Watchlist
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Price Alert Modal -->
+<div class="modal fade" id="priceAlertModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Set Price Alert</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="priceAlertForm">
+                    <input type="hidden" id="alertWatchlistId">
+                    <div class="mb-3">
+                        <label class="form-label">Alert Price</label>
+                        <input type="number" class="form-control" id="alertPrice" 
+                               placeholder="Enter price" step="0.01" required>
+                    </div>
+                    <div class="mb-3 form-check">
+                        <input type="checkbox" class="form-check-input" id="alertEnabled" checked>
+                        <label class="form-check-label" for="alertEnabled">Enable Alert</label>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" onclick="savePriceAlert()">
+                    <i class="fas fa-save"></i> Save Alert
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let watchlistAddModal, watchlistAlertModal;
+let currentWatchlistId = null;
+
+document.addEventListener('DOMContentLoaded', function() {
+    watchlistAddModal = new bootstrap.Modal(document.getElementById('addStockModal'));
+    watchlistAlertModal = new bootstrap.Modal(document.getElementById('priceAlertModal'));
+    
+    // Stock symbol search
+    const symbolInput = document.getElementById('stockSymbol');
+    let searchTimeout;
+    symbolInput.addEventListener('input', function() {
+        clearTimeout(searchTimeout);
+        const query = this.value.trim();
+        if (query.length >= 2) {
+            searchTimeout = setTimeout(() => searchStocks(query), 500);
+        } else {
+            document.getElementById('stockSearchResults').style.display = 'none';
+        }
+    });
+});
+
+function showAddStockModal() {
+    document.getElementById('addStockForm').reset();
+    watchlistAddModal.show();
+}
+
+function searchStocks(query) {
+    const resultsContainer = document.getElementById('stockSearchResults');
+    fetch(`/stock/search?q=${encodeURIComponent(query)}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success && data.results.length > 0) {
+                resultsContainer.innerHTML = '';
+                data.results.slice(0, 10).forEach(function(stock) {
+                    const item = document.createElement('a');
+                    item.className = 'dropdown-item';
+                    item.href = '#';
+                    item.innerHTML = `
+                        <div class="d-flex justify-content-between">
+                            <div>
+                                <strong>${stock.symbol}</strong>
+                                <div class="small text-muted">${stock.company_name || stock.symbol}</div>
+                            </div>
+                            ${stock.current_price ? `<div>$${stock.current_price.toFixed(2)}</div>` : ''}
+                        </div>
+                    `;
+                    item.addEventListener('click', function(e) {
+                        e.preventDefault();
+                        document.getElementById('stockSymbol').value = stock.symbol;
+                        resultsContainer.style.display = 'none';
+                    });
+                    resultsContainer.appendChild(item);
+                });
+                resultsContainer.style.display = 'block';
+            } else {
+                resultsContainer.style.display = 'none';
+            }
+        })
+        .catch(error => {
+            console.error('Search error:', error);
+            resultsContainer.style.display = 'none';
+        });
+}
+
+function addToWatchlist() {
+    const symbol = document.getElementById('stockSymbol').value.trim().toUpperCase();
+    const notes = document.getElementById('stockNotes').value.trim();
+    const priceAlert = document.getElementById('priceAlert').value;
+    
+    if (!symbol) {
+        showToast('Please enter a stock symbol.', 'danger');
+        return;
+    }
+    
+    const data = { symbol: symbol, notes: notes };
+    if (priceAlert && parseFloat(priceAlert) > 0) {
+        data.price_alert = parseFloat(priceAlert);
+    }
+    
+    fetch('/watchlist/add', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showToast('Stock added to watchlist!', 'success');
+            watchlistAddModal.hide();
+            setTimeout(() => location.reload(), 1000);
+        } else {
+            showToast(data.error || 'Error adding stock', 'danger');
+        }
+    })
+    .catch(error => {
+        showToast('Error adding stock', 'danger');
+        console.error('Add error:', error);
+    });
+}
+
+function removeFromWatchlist(watchlistId) {
+    if (!confirm('Are you sure you want to remove this stock from your watchlist?')) return;
+    
+    fetch(`/watchlist/remove/${watchlistId}`, {
+        method: 'DELETE'
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showToast('Stock removed from watchlist.', 'success');
+            setTimeout(() => location.reload(), 1000);
+        } else {
+            showToast(data.error || 'Error removing stock', 'danger');
+        }
+    })
+    .catch(error => {
+        showToast('Error removing stock', 'danger');
+        console.error('Remove error:', error);
+    });
+}
+
+function toggleFavorite(watchlistId) {
+    fetch(`/watchlist/favorite/${watchlistId}`, {
+        method: 'POST'
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showToast(data.is_favorite ? 'Added to favorites!' : 'Removed from favorites.', 'success');
+            setTimeout(() => location.reload(), 1000);
+        } else {
+            showToast(data.error || 'Error updating favorite', 'danger');
+        }
+    })
+    .catch(error => {
+        showToast('Error updating favorite', 'danger');
+        console.error('Favorite error:', error);
+    });
+}
+
+function setPriceAlert(watchlistId) {
+    currentWatchlistId = watchlistId;
+    document.getElementById('alertWatchlistId').value = watchlistId;
+    document.getElementById('alertPrice').value = '';
+    document.getElementById('alertEnabled').checked = true;
+    watchlistAlertModal.show();
+}
+
+function savePriceAlert() {
+    const watchlistId = document.getElementById('alertWatchlistId').value;
+    const price = document.getElementById('alertPrice').value;
+    const enabled = document.getElementById('alertEnabled').checked;
+    
+    if (!price || parseFloat(price) <= 0) {
+        showToast('Please enter a valid price.', 'danger');
+        return;
+    }
+    
+    fetch(`/watchlist/alert/${watchlistId}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            price: parseFloat(price),
+            enabled: enabled
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showToast('Price alert saved!', 'success');
+            watchlistAlertModal.hide();
+            setTimeout(() => location.reload(), 1000);
+        } else {
+            showToast(data.error || 'Error saving alert', 'danger');
+        }
+    })
+    .catch(error => {
+        showToast('Error saving alert', 'danger');
+        console.error('Alert error:', error);
+    });
+}
+</script>
+{% endblock %}

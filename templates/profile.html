@@ -1,0 +1,414 @@
+{% extends "base.html" %}
+
+{% block title %}Profile - {{ app_name }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-md-4">
+            <!-- Profile Card -->
+            <div class="card animate-fade-in">
+                <div class="card-body text-center">
+                    <div class="profile-upload mb-3">
+                        <img src="{{ url_for('static', filename='uploads/' + current_user.get_profile_picture()) }}" 
+                             alt="Profile Picture" id="profileImage">
+                        <div class="upload-overlay" onclick="document.getElementById('profilePictureInput').click();">
+                            <i class="fas fa-camera"></i> Change Photo
+                        </div>
+                        <input type="file" id="profilePictureInput" accept="image/*" style="display:none;">
+                    </div>
+                    
+                    <h4 class="mb-1">{{ current_user.get_full_name() }}</h4>
+                    <p class="text-muted">@{{ current_user.username }}</p>
+                    
+                    <div class="d-flex justify-content-around mt-3">
+                        <div>
+                            <h6 class="mb-0">{{ current_user.get_total_portfolio_value()|format_currency }}</h6>
+                            <small class="text-muted">Portfolio Value</small>
+                        </div>
+                        <div>
+                            <h6 class="mb-0">{{ current_user.get_watchlist_count() }}</h6>
+                            <small class="text-muted">Watchlist</small>
+                        </div>
+                        <div>
+                            <h6 class="mb-0">{{ current_user.portfolio|length }}</h6>
+                            <small class="text-muted">Holdings</small>
+                        </div>
+                    </div>
+                    
+                    <hr>
+                    
+                    <div class="text-start">
+                        <p><i class="fas fa-envelope me-2"></i> {{ current_user.email }}</p>
+                        <p><i class="fas fa-phone me-2"></i> {{ current_user.profile.mobile_number or 'Not set' }}</p>
+                        <p><i class="fas fa-calendar me-2"></i> Joined {{ current_user.created_at.strftime('%B %d, %Y') }}</p>
+                    </div>
+                    
+                    <div class="d-grid gap-2">
+                        <button class="btn btn-primary" onclick="editProfile()">
+                            <i class="fas fa-edit"></i> Edit Profile
+                        </button>
+                        <button class="btn btn-outline-danger" onclick="deleteAccount()">
+                            <i class="fas fa-trash"></i> Delete Account
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-8">
+            <!-- Recent Activity -->
+            <div class="card animate-fade-in">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-clock me-2"></i> Recent Activity</h5>
+                </div>
+                <div class="card-body">
+                    <div class="list-group list-group-flush" id="recentActivity">
+                        <!-- Activity items will be loaded dynamically -->
+                        <div class="text-center text-muted py-4">
+                            <i class="fas fa-spinner fa-spin me-2"></i> Loading activity...
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Settings -->
+            <div class="card animate-fade-in mt-3">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-cog me-2"></i> Settings</h5>
+                </div>
+                <div class="card-body">
+                    <form id="settingsForm">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">Theme</label>
+                                    <select class="form-select" id="themeSelect">
+                                        <option value="light" {% if current_user.settings and current_user.settings.theme == 'light' %}selected{% endif %}>Light</option>
+                                        <option value="dark" {% if current_user.settings and current_user.settings.theme == 'dark' %}selected{% endif %}>Dark</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">Currency</label>
+                                    <select class="form-select" id="currencySelect">
+                                        <option value="USD" {% if current_user.profile and current_user.profile.preferred_currency == 'USD' %}selected{% endif %}>USD ($)</option>
+                                        <option value="EUR" {% if current_user.profile and current_user.profile.preferred_currency == 'EUR' %}selected{% endif %}>EUR (€)</option>
+                                        <option value="GBP" {% if current_user.profile and current_user.profile.preferred_currency == 'GBP' %}selected{% endif %}>GBP (£)</option>
+                                        <option value="INR" {% if current_user.profile and current_user.profile.preferred_currency == 'INR' %}selected{% endif %}>INR (₹)</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">Auto Refresh</label>
+                                    <div class="form-check form-switch">
+                                        <input class="form-check-input" type="checkbox" id="autoRefreshToggle" 
+                                               {% if current_user.settings and current_user.settings.auto_refresh %}checked{% endif %}>
+                                        <label class="form-check-label" for="autoRefreshToggle">Enable auto refresh</label>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">Refresh Interval (seconds)</label>
+                                    <input type="number" class="form-control" id="refreshInterval" 
+                                           value="{{ current_user.settings.refresh_interval if current_user.settings else 30 }}" min="10" max="300">
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="d-grid">
+                            <button type="button" class="btn btn-primary" onclick="saveSettings()">
+                                <i class="fas fa-save"></i> Save Settings
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Profile Modal -->
+<div class="modal fade" id="editProfileModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Edit Profile</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="editProfileForm">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Full Name</label>
+                                <input type="text" class="form-control" id="editFullName" 
+                                       value="{{ current_user.get_full_name() }}">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Username</label>
+                                <input type="text" class="form-control" id="editUsername" 
+                                       value="{{ current_user.username }}">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Email</label>
+                                <input type="email" class="form-control" id="editEmail" 
+                                       value="{{ current_user.email }}">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Mobile Number</label>
+                                <input type="tel" class="form-control" id="editMobile" 
+                                       value="{{ current_user.profile.mobile_number or '' }}">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Bio</label>
+                        <textarea class="form-control" id="editBio" rows="3">{{ current_user.profile.bio or '' }}</textarea>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Date of Birth</label>
+                                <input type="date" class="form-control" id="editDOB" 
+                                       value="{{ current_user.profile.date_of_birth.isoformat() if current_user.profile.date_of_birth else '' }}">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Timezone</label>
+                                <select class="form-select" id="editTimezone">
+                                    <option value="UTC" {% if current_user.profile.timezone == 'UTC' %}selected{% endif %}>UTC</option>
+                                    <option value="EST" {% if current_user.profile.timezone == 'EST' %}selected{% endif %}>EST (Eastern Time)</option>
+                                    <option value="CST" {% if current_user.profile.timezone == 'CST' %}selected{% endif %}>CST (Central Time)</option>
+                                    <option value="MST" {% if current_user.profile.timezone == 'MST' %}selected{% endif %}>MST (Mountain Time)</option>
+                                    <option value="PST" {% if current_user.profile.timezone == 'PST' %}selected{% endif %}>PST (Pacific Time)</option>
+                                    <option value="GMT" {% if current_user.profile.timezone == 'GMT' %}selected{% endif %}>GMT (Greenwich Mean Time)</option>
+                                    <option value="IST" {% if current_user.profile.timezone == 'IST' %}selected{% endif %}>IST (India Standard Time)</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">City</label>
+                                <input type="text" class="form-control" id="editCity" 
+                                       value="{{ current_user.profile.city or '' }}">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Country</label>
+                                <input type="text" class="form-control" id="editCountry" 
+                                       value="{{ current_user.profile.country or '' }}">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Address</label>
+                        <textarea class="form-control" id="editAddress" rows="2">{{ current_user.profile.address or '' }}</textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" onclick="saveProfile()">
+                    <i class="fas fa-save"></i> Save Changes
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Load recent activity
+    loadRecentActivity();
+    
+    // Profile picture upload
+    document.getElementById('profilePictureInput').addEventListener('change', function(e) {
+        if (this.files && this.files[0]) {
+            uploadProfilePicture(this.files[0]);
+        }
+    });
+});
+
+function loadRecentActivity() {
+    fetch('/profile/api/activity')
+        .then(response => response.json())
+        .then(data => {
+            const container = document.getElementById('recentActivity');
+            if (data.success && data.activities.length > 0) {
+                container.innerHTML = '';
+                data.activities.forEach(function(activity) {
+                    const item = document.createElement('div');
+                    item.className = 'list-group-item';
+                    item.innerHTML = `
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <i class="fas fa-${activity.icon} me-2 text-primary"></i>
+                                ${activity.description}
+                            </div>
+                            <small class="text-muted">${getTimeAgo(activity.timestamp)}</small>
+                        </div>
+                    `;
+                    container.appendChild(item);
+                });
+            } else {
+                container.innerHTML = `
+                    <div class="text-center text-muted py-4">
+                        <i class="fas fa-inbox me-2"></i> No recent activity
+                    </div>
+                `;
+            }
+        })
+        .catch(error => {
+            console.error('Error loading activity:', error);
+        });
+}
+
+function editProfile() {
+    const modal = new bootstrap.Modal(document.getElementById('editProfileModal'));
+    modal.show();
+}
+
+function saveProfile() {
+    const data = {
+        full_name: document.getElementById('editFullName').value.trim(),
+        username: document.getElementById('editUsername').value.trim(),
+        email: document.getElementById('editEmail').value.trim(),
+        mobile_number: document.getElementById('editMobile').value.trim(),
+        bio: document.getElementById('editBio').value.trim(),
+        date_of_birth: document.getElementById('editDOB').value,
+        city: document.getElementById('editCity').value.trim(),
+        country: document.getElementById('editCountry').value.trim(),
+        address: document.getElementById('editAddress').value.trim(),
+        timezone: document.getElementById('editTimezone').value
+    };
+    
+    fetch('/profile/update', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(data)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showToast('Profile updated successfully!', 'success');
+            setTimeout(() => location.reload(), 1000);
+        } else {
+            showToast(data.error || 'Error updating profile', 'danger');
+        }
+    })
+    .catch(error => {
+        showToast('Error updating profile', 'danger');
+        console.error('Profile update error:', error);
+    });
+}
+
+function uploadProfilePicture(file) {
+    const formData = new FormData();
+    formData.append('profile_picture', file);
+    
+    fetch('/profile/upload-picture', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            document.getElementById('profileImage').src = data.url + '?t=' + Date.now();
+            showToast('Profile picture updated!', 'success');
+        } else {
+            showToast(data.error || 'Error uploading picture', 'danger');
+        }
+    })
+    .catch(error => {
+        showToast('Error uploading picture', 'danger');
+        console.error('Upload error:', error);
+    });
+}
+
+function saveSettings() {
+    const data = {
+        theme: document.getElementById('themeSelect').value,
+        currency: document.getElementById('currencySelect').value,
+        auto_refresh: document.getElementById('autoRefreshToggle').checked,
+        refresh_interval: parseInt(document.getElementById('refreshInterval').value) || 30
+    };
+    
+    fetch('/profile/settings', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(data)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showToast('Settings saved successfully!', 'success');
+            // Apply theme
+            if (data.theme === 'dark') {
+                enableDarkMode();
+            } else {
+                disableDarkMode();
+            }
+        } else {
+            showToast(data.error || 'Error saving settings', 'danger');
+        }
+    })
+    .catch(error => {
+        showToast('Error saving settings', 'danger');
+        console.error('Settings error:', error);
+    });
+}
+
+function deleteAccount() {
+    if (confirm('Are you sure you want to delete your account? This action cannot be undone.')) {
+        const password = prompt('Please enter your password to confirm:');
+        if (password) {
+            fetch('/profile/delete', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ password: password })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showToast('Account deleted successfully.', 'success');
+                    setTimeout(() => window.location.href = '/', 1500);
+                } else {
+                    showToast(data.error || 'Error deleting account', 'danger');
+                }
+            })
+            .catch(error => {
+                showToast('Error deleting account', 'danger');
+                console.error('Delete error:', error);
+            });
+        }
+    }
+}
+</script>
+{% endblock %}

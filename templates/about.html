@@ -1,0 +1,156 @@
+{% extends "base.html" %}
+
+{% block title %}About - {{ app_name }}{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row">
+        <div class="col-12 text-center mb-5">
+            <h1 class="fw-bold animate-fade-in">
+                <i class="fas fa-chart-line text-primary me-2"></i>
+                About {{ app_name }}
+            </h1>
+            <p class="text-muted lead">Your complete stock market tracking and portfolio management solution</p>
+        </div>
+    </div>
+    
+    <!-- Mission Section -->
+    <div class="row mb-5">
+        <div class="col-md-6 animate-fade-in">
+            <h3><i class="fas fa-bullseye text-primary me-2"></i>Our Mission</h3>
+            <p class="text-muted">
+                To empower investors of all levels with real-time market data, powerful analytical tools, 
+                and intuitive portfolio management capabilities. We believe that everyone should have access 
+                to the information they need to make informed investment decisions.
+            </p>
+        </div>
+        <div class="col-md-6 animate-fade-in">
+            <h3><i class="fas fa-eye text-primary me-2"></i>Our Vision</h3>
+            <p class="text-muted">
+                To become the most trusted and comprehensive stock market dashboard platform, 
+                bridging the gap between complex financial data and everyday investors through 
+                innovative technology and user-centered design.
+            </p>
+        </div>
+    </div>
+    
+    <!-- Features Section -->
+    <div class="row mb-5">
+        <div class="col-12 text-center mb-4">
+            <h2 class="fw-bold">Key Features</h2>
+        </div>
+        <div class="col-md-4 mb-3">
+            <div class="card h-100 text-center animate-fade-in">
+                <div class="card-body">
+                    <i class="fas fa-chart-line fa-3x text-primary mb-3"></i>
+                    <h5>Real-Time Data</h5>
+                    <p class="text-muted">Live stock prices, market indices, and crypto data with automatic updates every 30 seconds.</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4 mb-3">
+            <div class="card h-100 text-center animate-fade-in">
+                <div class="card-body">
+                    <i class="fas fa-briefcase fa-3x text-success mb-3"></i>
+                    <h5>Portfolio Management</h5>
+                    <p class="text-muted">Track your investments, calculate profit/loss, and analyze performance with interactive charts.</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4 mb-3">
+            <div class="card h-100 text-center animate-fade-in">
+                <div class="card-body">
+                    <i class="fas fa-bell fa-3x text-warning mb-3"></i>
+                    <h5>Price Alerts</h5>
+                    <p class="text-muted">Get notified when stocks reach your target prices or when important market events occur.</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4 mb-3">
+            <div class="card h-100 text-center animate-fade-in">
+                <div class="card-body">
+                    <i class="fas fa-chart-pie fa-3x text-info mb-3"></i>
+                    <h5>Interactive Charts</h5>
+                    <p class="text-muted">Visualize market data with line charts, candlestick charts, and volume analysis using Plotly.</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4 mb-3">
+            <div class="card h-100 text-center animate-fade-in">
+                <div class="card-body">
+                    <i class="fas fa-newspaper fa-3x text-danger mb-3"></i>
+                    <h5>Market News</h5>
+                    <p class="text-muted">Stay informed with the latest financial news, stock-specific updates, and market analysis.</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4 mb-3">
+            <div class="card h-100 text-center animate-fade-in">
+                <div class="card-body">
+                    <i class="fas fa-shield-alt fa-3x text-secondary mb-3"></i>
+                    <h5>Security</h5>
+                    <p class="text-muted">Secure authentication, password hashing, CSRF protection, and XSS prevention for your safety.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Tech Stack -->
+    <div class="row mb-5">
+        <div class="col-12 text-center mb-4">
+            <h2 class="fw-bold">Technology Stack</h2>
+        </div>
+        <div class="col-md-3 col-6 text-center">
+            <div class="p-3">
+                <i class="fab fa-python fa-3x text-primary"></i>
+                <h6 class="mt-2">Python</h6>
+                <small class="text-muted">Flask Framework</small>
+            </div>
+        </div>
+        <div class="col-md-3 col-6 text-center">
+            <div class="p-3">
+                <i class="fas fa-database fa-3x text-warning"></i>
+                <h6 class="mt-2">MySQL</h6>
+                <small class="text-muted">Database</small>
+            </div>
+        </div>
+        <div class="col-md-3 col-6 text-center">
+            <div class="p-3">
+                <i class="fab fa-js fa-3x text-success"></i>
+                <h6 class="mt-2">JavaScript</h6>
+                <small class="text-muted">Vanilla + jQuery</small>
+            </div>
+        </div>
+        <div class="col-md-3 col-6 text-center">
+            <div class="p-3">
+                <i class="fab fa-bootstrap fa-3x text-purple"></i>
+                <h6 class="mt-2">Bootstrap 5</h6>
+                <small class="text-muted">Frontend Framework</small>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Team Section -->
+    <div class="row">
+        <div class="col-12 text-center mb-4">
+            <h2 class="fw-bold">Built With ❤️</h2>
+            <p class="text-muted">Created by passionate developers for the investment community</p>
+        </div>
+    </div>
+    
+    <!-- Footer -->
+    <div class="row mt-5">
+        <div class="col-12 text-center">
+            <hr>
+            <p class="text-muted">
+                <i class="fas fa-code"></i> Built with Python Flask | 
+                <i class="fas fa-database"></i> MySQL | 
+                <i class="fas fa-chart-bar"></i> Chart.js & Plotly
+            </p>
+            <p class="text-muted small">
+                &copy; {{ now.year }} {{ app_name }}. All rights reserved.
+            </p>
+        </div>
+    </div>
+</div>
+{% endblock %}
